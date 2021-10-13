@@ -52,3 +52,4 @@ from lib_class import VkInfo
 if __name__ == '__main__':
     vk_init = VkInfo(...)
     user_vk = vk_init.get_vk_info(...)
+    pprint(user_vk)
