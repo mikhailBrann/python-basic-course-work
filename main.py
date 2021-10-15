@@ -51,7 +51,19 @@ from lib_class import VkInfo
 
 if __name__ == '__main__':
     vk_init = VkInfo(...)
-    user_vk = vk_init.get_vk_info('begemot_korovin')
-    
-    if user_vk:
-        pprint(user_vk)
+    responce_vk = vk_init.get_vk_info('begemot_korovin')
+    qantity_photo = 5
+
+    if responce_vk:
+        #  top5 = list_cat[:5]
+        photo_vk = responce_vk['response']['items']
+
+        # задаем нужное количество сохраяемых фото
+        if len(photo_vk) >= qantity_photo:
+            photo_vk = photo_vk[:qantity_photo]
+
+        # получаем фото лучшего качества через подсчет площади фотографии
+        for photo in photo_vk:
+            photo['sizes'] = sorted(photo['sizes'], key=lambda size_photo_: (size_photo_['width'] * size_photo_['height']), reverse=True)
+            photo['sizes'] = photo['sizes'][:1]
+            
