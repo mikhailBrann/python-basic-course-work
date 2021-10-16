@@ -45,14 +45,17 @@
 
 
 from pprint import pprint
-from lib_class import VkInfo
+from lib_class import VkInfo,YaUploader
 
 
 
 if __name__ == '__main__':
-    vk_init = VkInfo(...)
+    vk_init = VkInfo('958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008')
+    yd_file_upload = YaUploader('...')
+
     responce_vk = vk_init.get_vk_info('begemot_korovin')
     qantity_photo = 5
+    photo_list = []
 
     if responce_vk:
         #  top5 = list_cat[:5]
@@ -66,4 +69,12 @@ if __name__ == '__main__':
         for photo in photo_vk:
             photo['sizes'] = sorted(photo['sizes'], key=lambda size_photo_: (size_photo_['width'] * size_photo_['height']), reverse=True)
             photo['sizes'] = photo['sizes'][:1]
-            
+
+            # "file_name": "34.jpg",
+            # "size": "z"
+
+            # photo_list.apend({})
+        
+        dir_is = yd_file_upload._get_upload_link('test')
+
+        pprint(dir_is)

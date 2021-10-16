@@ -1,4 +1,52 @@
 import requests
+from datetime import datetime
+
+class YaUploader:
+    def __init__(self, token: str):
+        self.token = token
+
+    def get_headers(self):
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': f'OAuth {self.token}'
+        }
+
+    def _get_upload_link(self, disk_file_path):
+        upload_url = 'https://cloud-api.yandex.net/v1/disk/resources'
+        headers = self.get_headers()
+
+        data = datetime.now()
+
+        disk_file_path = disk_file_path + data.strftime("__(%d.%m.%Y)_%H-%M-%S") + str(data.microsecond)
+
+
+        params = {'path': disk_file_path}
+        response = requests.put(url=upload_url, headers=headers, params=params)
+
+        # тут проверяем, есть ли директория в облачном хранилище
+        if response.status_code == 201:
+            return response.json()
+        else:
+            print(response.status_code)
+            return False
+
+
+    # def upload(self, file_path: str='', hard_disk_dir='files'):
+    #     """Метод загружает файлы из директории {hard_disk_dir} на яндекс диск"""
+    #     response = self._get_upload_link(file_path)
+    
+    #     if response:
+    #         url = response['href']
+    #         response = requests.put(url=url, data=open(path_to_file + file_.name, 'rb'))
+    #         response.raise_for_status()
+    #         if response.status_code == 201:
+    #             if file_path:
+    #                 print(f'Файл {file_.name} успешно загружен в {file_path}')
+    #             else:
+    #                 print(f'Файл {file_.name} успешно загружен в корневую папку диска')
+    #     else:
+    #         print(f'Ошибка: директории {file_path} нет в облачном хранилище.\nУкажите существующую директорию или оставьте поле пустым для загрузки в корень хранилища')
+    #         break
 
 class VkInfo:
     def __init__(self, token):
