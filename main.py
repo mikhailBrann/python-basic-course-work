@@ -66,15 +66,19 @@ if __name__ == '__main__':
             photo_vk = photo_vk[:qantity_photo]
 
         # получаем фото лучшего качества через подсчет площади фотографии
+        photo_dir = yd_file_upload._put_upload_dir('test')
         for photo in photo_vk:
             photo['sizes'] = sorted(photo['sizes'], key=lambda size_photo_: (size_photo_['width'] * size_photo_['height']), reverse=True)
             photo['sizes'] = photo['sizes'][:1]
 
+            file_name = str(photo['likes']['count']) + '.jpg'
+
+            yd_file_upload._upload_files(photo_dir, file_name, photo['sizes'][0]['url'])
             # "file_name": "34.jpg",
             # "size": "z"
 
             # photo_list.apend({})
-        
-        dir_is = yd_file_upload._get_upload_link('test')
+     
+        # dir_is = yd_file_upload._put_upload_dir('test')
 
-        pprint(dir_is)
+        # pprint(dir_is)

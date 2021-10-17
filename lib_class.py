@@ -11,23 +11,35 @@ class YaUploader:
             'Authorization': f'OAuth {self.token}'
         }
 
-    def _get_upload_link(self, disk_file_path):
+    # метод создает директорию на яндекс диске с уникальным именем
+    def _put_upload_dir(self, disk_file_path):
         upload_url = 'https://cloud-api.yandex.net/v1/disk/resources'
         headers = self.get_headers()
-
         data = datetime.now()
 
         disk_file_path = disk_file_path + data.strftime("__(%d.%m.%Y)_%H-%M-%S") + str(data.microsecond)
-
-
         params = {'path': disk_file_path}
         response = requests.put(url=upload_url, headers=headers, params=params)
 
         # тут проверяем, есть ли директория в облачном хранилище
         if response.status_code == 201:
+            return disk_file_path
+        else:
+            return False
+
+
+    def _upload_files(self, disk_file_path, file_name, url_to_file):
+        upload_url = 'https://cloud-api.yandex.net/v1/disk/resources/upload/'
+        headers = self.get_headers()
+        path_to_file = disk_file_path + '/' + file_name
+
+        params = {'path': path_to_file, 'url': url_to_file}
+        response = requests.post(url=upload_url, headers=headers, params=params)
+
+        # тут проверяем, есть ли директория в облачном хранилище
+        if response.status_code == 201:
             return response.json()
         else:
-            print(response.status_code)
             return False
 
 
