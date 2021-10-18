@@ -48,37 +48,62 @@ from pprint import pprint
 from lib_class import VkInfo,YaUploader
 
 
+def upload_foto_from_vk(vk_token, disc_tokken, user_id, photo_quantity = 5):
+    vk_init = VkInfo(vk_token)
+    yd_file_upload = YaUploader(disc_tokken)
 
-if __name__ == '__main__':
-    vk_init = VkInfo('958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008')
-    yd_file_upload = YaUploader('...')
-
-    responce_vk = vk_init.get_vk_info('begemot_korovin')
-    qantity_photo = 5
+    responce_vk = vk_init.get_vk_info(user_id)
+    qantity_photo = int(photo_quantity)
     photo_list = []
 
+
     if responce_vk:
-        #  top5 = list_cat[:5]
         photo_vk = responce_vk['response']['items']
 
         # задаем нужное количество сохраяемых фото
         if len(photo_vk) >= qantity_photo:
             photo_vk = photo_vk[:qantity_photo]
 
-        # получаем фото лучшего качества через подсчет площади фотографии
-        photo_dir = yd_file_upload._put_upload_dir('test')
+        # создаем директорию на удаленном диске под файл
+        photo_dir = yd_file_upload._put_upload_dir('VK')
+        
         for photo in photo_vk:
-            photo['sizes'] = sorted(photo['sizes'], key=lambda size_photo_: (size_photo_['width'] * size_photo_['height']), reverse=True)
-            photo['sizes'] = photo['sizes'][:1]
+            if photo_dir:
+                # определяем лучшее по размеру фото
+                photo['sizes'] = sorted(photo['sizes'], key=lambda size_photo_: (size_photo_['width'] * size_photo_['height']), reverse=True)
+                photo['sizes'] = photo['sizes'][:1]
 
-            file_name = str(photo['likes']['count']) + '.jpg'
+                # проверяем, файл на диске, чтоб не перезаписать 
 
-            yd_file_upload._upload_files(photo_dir, file_name, photo['sizes'][0]['url'])
-            # "file_name": "34.jpg",
-            # "size": "z"
+                file_name = f"{photo['likes']['count']}.jpg"
 
-            # photo_list.apend({})
-     
-        # dir_is = yd_file_upload._put_upload_dir('test')
+                ex_file = yd_file_upload._file_exists(photo_dir, file_name)
 
-        # pprint(dir_is)
+                pprint(ex_file)
+
+                if ex_file != int(200):
+                    file_name = f"{photo['likes']['count']}.jpg"
+                    yd_file_upload._upload_files(photo_dir, file_name, photo['sizes'][0]['url'])
+                else:
+                    file_name = f"{photo['date']}.jpg"
+                    yd_file_upload._upload_files(photo_dir, file_name, photo['sizes'][0]['url'])
+
+                
+
+                photo_list.append({"file_name": file_name, "size": photo['sizes'][0]['type']})
+            
+        return photo_list
+
+
+
+if __name__ == '__main__':
+    vk_token = '958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008'
+    yd_token = 'AQAAAAANgbiBAADLW-EQYv2IokdahbB0K071wQE'
+
+    upload_result = upload_foto_from_vk(vk_token, yd_token, 'begemot_korovin', 5)
+
+    pprint(upload_result)
+
+    
+            
+          
