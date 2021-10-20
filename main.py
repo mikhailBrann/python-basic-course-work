@@ -1,61 +1,18 @@
-
-# Возможна такая ситуация, что мы хотим показать друзьям фотографии из социальных сетей, но соц. сети могут быть недоступны по каким-либо причинам. Давайте защитимся от такого.
-# Нужно написать программу для резервного копирования фотографий с профиля(аватарок) пользователя vk в облачное хранилище Яндекс.Диск.
-# Для названий фотографий использовать количество лайков, если количество лайков одинаково, то добавить дату загрузки.
-# Информацию по сохраненным фотографиям сохранить в json-файл.
-
-
-# Нужно написать программу, которая будет:
-# 1) Получать фотографии с профиля. Для этого нужно использовать метод photos.get.
-# 2) Сохранять фотографии максимального размера(ширина/высота в пикселях) на Я.Диске.
-# 3) Для имени фотографий использовать количество лайков.
-# 4) Сохранять информацию по фотографиям в json-файл с результатами.
-
-# Входные данные:
-
-# Пользователь вводит:
-# 1) id пользователя vk;
-# 2) токен с Полигона Яндекс.Диска. Важно: Токен публиковать в github не нужно!
-
-# Выходные данные:
-# 1) json-файл с информацией по файлу:
-#     [{
-#     "file_name": "34.jpg",
-#     "size": "z"
-#     }]
-# 2) Измененный Я.диск, куда добавились фотографии.​​
-
-
-# Обязательные требования к программе:
-# 1) Использовать REST API Я.Диска и ключ, полученный с полигона.
-# 2) Для загруженных фотографий нужно создать свою папку.
-# 3) Сохранять указанное количество фотографий(по умолчанию 5) наибольшего размера (ширина/высота в пикселях) на Я.Диске
-# 4) Сделать прогресс-бар или логирование для отслеживания процесса программы.
-# 5) Код программы должен удовлетворять PEP8.​
-
-
-# Необязательные требования к программе:
-# 1) Сохранять фотографии и из других альбомов.
-# 2) Сохранять фотографии из других социальных сетей. Одноклассники и Инстаграмм
-# 3) Сохранять фотографии на Google.Drive.
-
-
-# Советы:
-# Для тестирования можно использовать аккаунт https://vk.com/begemot_korovin
-
-
-from pprint import pprint
 from lib_class import VkInfo,YaUploader
 
 
-def upload_foto_from_vk(vk_token, disc_tokken, user_id, photo_quantity = 5):
-    vk_init = VkInfo(vk_token)
+def upload_foto_from_vk(disc_tokken, user_id, photo_quantity):
+    vk_init = VkInfo('958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008')
     yd_file_upload = YaUploader(disc_tokken)
 
     responce_vk = vk_init.get_vk_info(user_id)
+
+    # значение по умолчанию, если пользователь не указал кол-во фото
+    if photo_quantity == '':
+        photo_quantity = 5
+
     qantity_photo = int(photo_quantity)
     photo_list = []
-
 
     if responce_vk:
         photo_vk = responce_vk['response']['items']
@@ -66,43 +23,59 @@ def upload_foto_from_vk(vk_token, disc_tokken, user_id, photo_quantity = 5):
 
         # создаем директорию на удаленном диске под файл
         photo_dir = yd_file_upload._put_upload_dir('VK')
-        
+
+        print('Файлы загружаются:\n')
         for photo in photo_vk:
             if photo_dir:
                 # определяем лучшее по размеру фото
                 photo['sizes'] = sorted(photo['sizes'], key=lambda size_photo_: (size_photo_['width'] * size_photo_['height']), reverse=True)
                 photo['sizes'] = photo['sizes'][:1]
+                file_name = ''
 
-                # проверяем, файл на диске, чтоб не перезаписать 
-
-                file_name = f"{photo['likes']['count']}.jpg"
-
-                ex_file = yd_file_upload._file_exists(photo_dir, file_name)
-
-                pprint(ex_file)
-
-                if ex_file != int(200):
-                    file_name = f"{photo['likes']['count']}.jpg"
-                    yd_file_upload._upload_files(photo_dir, file_name, photo['sizes'][0]['url'])
-                else:
-                    file_name = f"{photo['date']}.jpg"
-                    yd_file_upload._upload_files(photo_dir, file_name, photo['sizes'][0]['url'])
-
+                # проверяет количество одинаковых значений в списке словарей
+                check_like = len(list(filter(lambda item: item['likes']['count'] == photo['likes']['count'], photo_vk)))
                 
+                if check_like > 1:
+                    file_name = f"{photo['likes']['count']}_{photo['date']}.jpg"
+                else:
+                    file_name = f"{photo['likes']['count']}.jpg"
 
-                photo_list.append({"file_name": file_name, "size": photo['sizes'][0]['type']})
-            
+                response_result = yd_file_upload._upload_files(photo_dir, file_name, photo['sizes'][0]['url'])
+
+                if response_result:
+                    print(f'Файл {file_name} загружен в директорию {photo_dir}\n')
+                    photo_list.append({"file_name": file_name, "size": photo['sizes'][0]['type']})
+
         return photo_list
 
 
-
 if __name__ == '__main__':
-    vk_token = '958eb5d439726565e9333aa30e50e0f937ee432e927f0dbd541c541887d919a7c56f95c04217915c32008'
-    yd_token = 'AQAAAAANgbiBAADLW-EQYv2IokdahbB0K071wQE'
+    
+    say_hello = '''
+    Программа создана для бекапа фотографий со страницы ВК.
+    Введите последовательно следующие данные:
+    1) Токен от Яндекс.диск (доступен по адресу: https://yandex.ru/dev/disk/poligon/)
+    2) Id пользователя в ВК
+    3) количество фотографий для сохранения (если оставите поле пустым, сохранятся 5 фото)\n 
+    '''
+    print(say_hello)
 
-    upload_result = upload_foto_from_vk(vk_token, yd_token, 'begemot_korovin', 5)
+    user_disk_token = input('пожалуйста, введите токен от Яндекс.диск ==> ')
+    vk_id = input('пожалуйста, введите id пользователя в ВК ==> ')
+    photo_qantity = input('пожалуйста, введите количество фотографий ==> ')
 
-    pprint(upload_result)
+    while True:
+        if photo_qantity == '':
+            break
+        elif str(photo_qantity).isdigit() is False or int(photo_qantity) <= 0:
+            print('Введите число больше 0')
+            photo_qantity = input('пожалуйста, введите количество фотографий ==> ')
+        else:
+            break
+
+
+    upload_result = upload_foto_from_vk(user_disk_token, vk_id, photo_qantity)
+    print(upload_result)
 
     
             

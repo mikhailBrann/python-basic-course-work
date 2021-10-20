@@ -1,9 +1,12 @@
 import requests
 from datetime import datetime
+import time, sys
+
 
 class YaUploader:
     def __init__(self, token: str):
         self.token = token
+
 
     def get_headers(self):
         return {
@@ -11,13 +14,14 @@ class YaUploader:
             'Authorization': f'OAuth {self.token}'
         }
 
+
     # метод создает директорию на яндекс диске с уникальным именем
     def _put_upload_dir(self, disk_file_path):
         upload_url = 'https://cloud-api.yandex.net/v1/disk/resources'
         headers = self.get_headers()
         data = datetime.now()
 
-        dir_path = disk_file_path + data.strftime("%d.%m.%Y_%H.%M.%S_") + str(data.microsecond)
+        dir_path = disk_file_path + data.strftime("%d.%m.%Y_%H-%M-%S_") + str(data.microsecond)
         params = {'path': dir_path}
         response = requests.put(url=upload_url, headers=headers, params=params)
 
@@ -26,17 +30,8 @@ class YaUploader:
             return dir_path
         else:
             return False
-
-    def _file_exists(self, file_path, serch_file_name):
-        url = 'https://cloud-api.yandex.net/v1/disk/resources'
-        headers = self.get_headers()
-
-        full_path_to_file = f'{file_path}/{serch_file_name}'
-        params = {'path':  str(full_path_to_file)}
-        response = requests.get(url=url, headers=headers, params=params)
-
-        return response.status_code
         
+
     def _upload_files(self, disk_file_path, file_name, url_to_file):
         upload_url = 'https://cloud-api.yandex.net/v1/disk/resources/upload/'
         headers = self.get_headers()
@@ -45,9 +40,16 @@ class YaUploader:
         params = {'path': path_to_file, 'url': url_to_file}
         response = requests.post(url=upload_url, headers=headers, params=params)
 
-        # тут проверяем, есть ли директория в облачном хранилище
-        if response.status_code == 201:
-            return response.json()
+        # прогресс бар
+        for i in range(21):
+            sys.stdout.write('\r')
+            sys.stdout.write("[%-20s] %d%%" % ('='*i, 5*i))
+            sys.stdout.flush()
+            time.sleep(0.05)
+        print()
+
+        if response.status_code < 300:
+            return True
         else:
             return False
 
@@ -56,6 +58,7 @@ class VkInfo:
     def __init__(self, token):
         self.token = token
     
+
     def get_vk_request(self, method, params = {}):
         responce_result = False
         params.setdefault('access_token', self.token)
